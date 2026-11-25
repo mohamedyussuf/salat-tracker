@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salat Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f6f1e7;--card:#fffdf8;--ink:#17261f;--mute:#6b7a72;--line:#e4dccb;--green:#1f6b4f;--green2:#e3f1ea;--gold:#b8862b;--red:#b3402f;--red2:#f8e4df;--lock:#ece6d8}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1a15;--card:#16241d;--ink:#eef2ee;--mute:#92a59b;--line:#25382f;--green:#4fbf93;--green2:#17382b;--gold:#dcae57;--red:#e8806e;--red2:#3a1f1a;--lock:#1c2d25}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+h1,h2{font-family:Fraunces,Georgia,serif;margin:0}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+h1{font-size:28px}
+.sub{color:var(--mute);font-size:14px}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer}
+.tabs{display:flex;gap:6px;margin:18px 0;background:var(--lock);padding:4px;border-radius:12px}
+.tabs button{flex:1;border:0;background:none;color:var(--mute);padding:9px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0002}
+.hero{background:var(--green);color:#fff;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:18px;margin-bottom:14px}
+@media(prefers-color-scheme:dark){.hero{background:#1b4d3a}}
+.ring{width:64px;height:64px;flex:none}
+.hero b{font-family:Fraunces,serif;font-size:22px;display:block}
+.hero span{opacity:.85;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.card .nm{flex:1;min-width:0}
+.card .nm b{font-size:18px;font-family:Fraunces,serif}
+.card .nm small{display:block;color:var(--mute);font-size:13px}
+.ar{color:var(--mute);font-size:15px;margin-left:6px;font-family:serif}
+.btn{border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:600;cursor:pointer;min-width:112px}
+.btn.go{background:var(--green);color:#fff}
+.btn.lock{background:var(--lock);color:var(--mute);cursor:not-allowed}
+.btn.done{background:var(--green2);color:var(--green)}
+.btn.miss{background:var(--red2);color:var(--red);cursor:not-allowed}
+.card.open{border-color:var(--green);box-shadow:0 0 0 2px var(--green2)}
+.banner{background:var(--green2);border:1px solid var(--green);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.panel label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{font-size:13px;color:var(--mute);margin-top:10px}
+.wk{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.win{background:var(--green2);border:1px solid var(--green);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.person{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.person .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.badge{font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.badge.earn{background:var(--gold);color:#fff}.badge.track{background:var(--green2);color:var(--green)}.badge.out{background:var(--red2);color:var(--red)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.days small{font-size:11px;color:var(--mute);display:block;margin-bottom:3px}
+.dots{display:flex;flex-direction:column;gap:3px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--line)}
+.dot.done{background:var(--green);border-color:var(--green)}.dot.miss{background:var(--red);border-color:var(--red)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:9;max-width:90%}
+.empty{color:var(--mute);text-align:center;padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty">Loading…</div></div>
+<script>
+const PR=[{k:'fajr',n:'Fajr',ar:'الفجر'},{k:'dhuhr',n:'Dhuhr',ar:'الظهر'},{k:'asr',n:'Asr',ar:'العصر'},{k:'maghrib',n:'Maghrib',ar:'المغرب'},{k:'isha',n:'Isha',ar:'العشاء'}];
+const CITIES={toronto:['Toronto',43.65,-79.38],ottawa:['Ottawa',45.42,-75.70],montreal:['Montréal',45.50,-73.57],vancouver:['Vancouver',49.28,-123.12],calgary:['Calgary',51.05,-114.07],newyork:['New York',40.71,-74.01],chicago:['Chicago',41.88,-87.63],losangeles:['Los Angeles',34.05,-118.24],london:['London',51.51,-0.13],makkah:['Makkah',21.42,39.83],dubai:['Dubai',25.20,55.27],istanbul:['Istanbul',41.01,28.98],karachi:['Karachi',24.86,67.01],dhaka:['Dhaka',23.81,90.41],kl:['Kuala Lumpur',3.14,101.69],custom:['Custom coordinates',0,0]};
+const METHODS={isna:['ISNA (North America)',15,15],mwl:['Muslim World League',18,17],egypt:['Egyptian Authority',19.5,17.5],karachi:['Univ. of Islamic Sciences, Karachi',18,18]};
+const DEF={city:'toronto',method:'isna',hanafi:false,lat:43.65,lng:-79.38};
+const rad=Math.PI/180,deg=180/Math.PI,S=a=>Math.sin(a*rad),C=a=>Math.cos(a*rad),T=a=>Math.tan(a*rad);
+const fix=(a,b)=>{a=a-b*Math.floor(a/b);return a<0?a+b:a};
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fromKey=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+
+function loc(s){if(s.city==='custom')return [+s.lat||0,+s.lng||0];const c=CITIES[s.city]||CITIES.toronto;return [c[1],c[2]]}
+const cache={};
+function times(s,dk){
+  const sig=[s.city,s.method,s.hanafi,s.lat,s.lng,dk].join('|');if(cache[sig])return cache[sig];
+  const d=fromKey(dk),y=d.getFullYear(),m=d.getMonth(),dd=d.getDate(),[lat,lng]=loc(s),M=METHODS[s.method]||METHODS.isna;
+  const D=(Date.UTC(y,m,dd,12)-946728000000)/864e5;
+  const g=fix(357.529+0.98560028*D,360),q=fix(280.459+0.98564736*D,360);
+  const L=fix(q+1.915*S(g)+0.020*S(2*g),360),e=23.439-0.00000036*D;
+  const RA=fix(Math.atan2(C(e)*S(L),C(L))*deg/15,24),decl=Math.asin(S(e)*S(L))*deg;
+  let eqt=q/15-RA;if(eqt>12)eqt-=24;if(eqt<-12)eqt+=24;
+  const tz=-new Date(y,m,dd,12).getTimezoneOffset()/60,noon=12+tz-lng/15-eqt;
+  const t=a=>{const c=(-S(a)-S(decl)*S(lat))/(C(decl)*C(lat));return(c>1||c<-1)?NaN:Math.acos(c)*deg/15};
+  const asrAng=-Math.atan(1/((s.hanafi?2:1)+T(Math.abs(lat-decl))))*deg;
+  const h={fajr:noon-t(M[1]),sunrise:noon-t(0.833),dhuhr:noon,asr:noon+t(asrAng),maghrib:noon+t(0.833),isha:noon+t(M[2])};
+  const r={};for(const k in h){r[k]=new Date(Date.UTC(y,m,dd)+(Math.round(h[k]*60)/60-tz)*36e5)}
+  return cache[sig]=r;
+}
+function wins(s,dk){
+  const a=times(s,dk),b=times(s,key(addDays(fromKey(dk),1)));
+  return{fajr:{start:+a.fajr,end:+a.sunrise},dhuhr:{start:+a.dhuhr,end:+a.asr},asr:{start:+a.asr,end:+a.maghrib},maghrib:{start:+a.maghrib,end:+a.isha},isha:{start:+a.isha,end:+b.fajr}};
+}
+const fmt=ms=>{const d=new Date(ms);let h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+pad(m)+' '+ap};
+const left=ms=>{const m=Math.max(0,Math.round(ms/6e4)),h=Math.floor(m/60);return h?h+'h '+pad(m%60)+'m':m+'m'};
+
+// ---------- state ----------
+let myId='local',dbOn=false,docRef=null,all={},me={name:'',settings:{...DEF},checks:{}};
+let view='today',weekOff=0,showSet=false,loaded=false,pending=0,saveChain=Promise.resolve();
+const LS='salat-tracker-v1';
+function lsGet(){try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}}
+function lsSet(){try{localStorage.setItem(LS,JSON.stringify(me))}catch(e){}}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2600)}
+function save(){
+  lsSet();if(!dbOn||!docRef)return;
+  const payload=JSON.parse(JSON.stringify(me));pending++;
+  saveChain=saveChain.then(()=>docRef.set(payload)).catch(()=>toast("Couldn't sync — check your connection")).then(()=>{pending--});
+}
+function norm(snap){const out={};const push=d=>{out[d.id]=(typeof d.data==='function'?d.data():d.data)||{}};
+  if(snap&&snap.docs)snap.docs.forEach(push);else if(snap&&typeof snap.forEach==='function')snap.forEach(push);return out}
+
+async function init(){
+  const L=lsGet();if(L)me={...me,...L,settings:{...DEF,...(L.settings||{})}};
+  render();
+  try{
+    const user=await claude.use('user'),db=await claude.use('db');
+    if(user&&db){
+      myId=await user.id();dbOn=true;docRef=db.collection('salat').doc(myId);
+      if(!me.name){try{const p=await user.profiles([myId]);me.name=(p[myId]&&p[myId].name)||''}catch(e){}}
+      const timer=setTimeout(()=>{loaded=true;render()},10000);
+      db.collection('salat').onSnapshot(snap=>{
+        clearTimeout(timer);all=norm(snap);loaded=true;
+        const mine=all[myId];
+        if(mine&&pending===0){me={name:mine.name||me.name,settings:{...DEF,...(mine.settings||{})},checks:mine.checks||{}}}
+        render();
+      },()=>{clearTimeout(timer);loaded=true;render()});
+    }else loaded=true;
+  }catch(e){loaded=true}
+  render();
+}
+
+// ---------- status ----------
+function st(p,dk,k){
+  if(p.checks&&p.checks[dk]&&p.checks[dk][k])return'done';
+  const w=wins(p.settings||me.settings,dk)[k],n=Date.now();
+  return n>=w.end?'miss':n>=w.start?'open':'upcoming';
+}
+function toggle(dk,k){
+  const s=st(me,dk,k),w=wins(me.settings,dk)[k],n=Date.now();
+  me.checks=me.checks||{};me.checks[dk]=me.checks[dk]||{};
+  if(s==='done'){if(n>=w.end){toast('This prayer window has closed.');return}delete me.checks[dk][k]}
+  else if(s==='open'){me.checks[dk][k]=n}
+  else if(s==='upcoming'){toast('Not time for '+PR.find(x=>x.k===k).n+' yet — opens at '+fmt(w.start));return}
+  else{toast('Missed — it can’t be checked off now.');return}
+  save();render();
+}
+window.toggle=toggle;
+
+// ---------- views ----------
+function ringSvg(n){const c=2*Math.PI*26,o=c*(1-n/5);return`<svg class="ring" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="#ffffff33" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${o}" transform="rotate(-90 32 32)"/><text x="32" y="38" text-anchor="middle" fill="#fff" font-size="18" font-weight="700">${n}/5</text></svg>`}
+
+function card(dk,pr,label){
+  const w=wins(me.settings,dk)[pr.k],s=st(me,dk,pr.k),n=Date.now();
+  const bad=isNaN(w.start)||isNaN(w.end);
+  let sub,btn;
+  if(bad){sub='Time unavailable for this location';btn=`<button class="btn lock" disabled>—</button>`}
+  else if(s==='done'){const ts=me.checks[dk][pr.k];sub='Prayed at '+fmt(ts)+(n<w.end?' · window closes '+fmt(w.end):'');btn=`<button class="btn done" onclick="toggle('${dk}','${pr.k}')">✓ Prayed</button>`}
+  else if(s==='open'){sub=fmt(w.start)+' – '+fmt(w.end)+' · '+left(w.end-n)+' left';btn=`<button class="btn go" onclick="toggle('${dk}','${pr.k}')">Mark prayed</button>`}
+  else if(s==='upcoming'){sub='Opens at '+fmt(w.start);btn=`<button class="btn lock" disabled>🔒 Locked</button>`}
+  else{sub='Window closed at '+fmt(w.end);btn=`<button class="btn miss" disabled>Missed</button>`}
+  return`<div class="card ${s==='open'?'open':''}"><div class="nm"><b>${pr.n}</b><span class="ar">${pr.ar}</span>${label?`<span class="sub"> · ${label}</span>`:''}<small>${sub}</small></div>${btn}</div>`;
+}
+
+function todayView(){
+  const now=new Date(),dk=key(now),yk=key(addDays(now,-1)),t=times(me.settings,dk);
+  let done=0;PR.forEach(p=>{if(st(me,dk,p.k)==='done')done++});
+  const nowMs=+now;let nextTxt='';
+  const wl=wins(me.settings,dk);
+  const cur=PR.find(p=>nowMs>=wl[p.k].start&&nowMs<wl[p.k].end),nxt=PR.find(p=>nowMs<wl[p.k].start);
+  if(cur)nextTxt=cur.n+' is open · '+left(wl[cur.k].end-nowMs)+' left';
+  else if(nxt)nextTxt='Next: '+nxt.n+' at '+fmt(wl[nxt.k].start);
+  else nextTxt='All of today’s windows have passed';
+  let h=`<div class="hero">${ringSvg(done)}<div><b>${done===5?'All five done 🌙':done+' of 5 prayed'}</b><span>${esc(nextTxt)}</span></div></div>`;
+  if(st(me,yk,'isha')==='open'||(st(me,yk,'isha')==='done'&&false)){
+    h+=`<div class="banner">Last night’s Isha is still open until Fajr.</div>`+card(yk,PR[4],'last night');
+  }
+  h+=PR.map(p=>card(dk,p)).join('');
+  h+=`<p class="note">Sunrise ${isNaN(+t.sunrise)?'—':fmt(+t.sunrise)}. Each prayer can only be checked off once its time begins, and not after its time ends.</p>`;
+  return h;
+}
+
+function weekStart(off){const d=new Date();d.setHours(0,0,0,0);const dow=(d.getDay()+6)%7;return addDays(d,-dow+off*7)}
+function weekView(){
+  const ws=weekStart(weekOff),days=[...Array(7)].map((_,i)=>addDays(ws,i)),dks=days.map(key);
+  const people=Object.entries(dbOn?all:{local:me}).map(([id,d])=>({id,name:d.name||'Unnamed',checks:d.checks||{},settings:{...DEF,...(d.settings||{})}}));
+  if(dbOn&&!all[myId])people.push({id:myId,name:me.name||'You',checks:me.checks,settings:me.settings});
+  const rows=people.map(p=>{
+    if(p.id===myId)p={...p,checks:me.checks,settings:me.settings,name:me.name||p.name};
+    let done=0,miss=0;const cols=days.map((d,i)=>{
+      const dots=PR.map(pr=>{const s=st(p,dks[i],pr.k);if(s==='done')done++;if(s==='miss')miss++;return`<span class="dot ${s==='done'?'done':s==='miss'?'miss':''}"></span>`}).join('');
+      return`<div><small>${['M','T','W','T','F','S','S'][i]}</small><div class="dots">${dots}</div></div>`}).join('');
+    const over=Date.now()>=wins(p.settings,dks[6]).isha.end;
+    let b;if(done===35)b=['earn','$5 earned 🎉'];else if(miss>0)b=['out',miss+' missed'];else if(over)b=['out',done+'/35'];else b=['track','On track'];
+    return{p,done,miss,html:`<div class="person"><div class="top"><b>${esc(p.name)}${p.id===myId?' (you)':''}</b><span><span class="sub">${done}/35 </span><span class="badge ${b[0]}">${b[1]}</span></span></div><div class="days">${cols}</div></div>`};
+  }).sort((a,b)=>b.done-a.done);
+  const winners=rows.filter(r=>r.done===35);
+  const f=d=>d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  let h=`<div class="wk"><button class="ghost" onclick="weekOff--;render()">‹ Prev</button><div style="text-align:center"><b>${weekOff===0?'This week':f(ws)+' – '+f(days[6])}</b><div class="sub">${f(ws)} – ${f(days[6])}</div></div><button class="ghost" onclick="weekOff++;render()" ${weekOff>=0?'disabled style="opacity:.4"':''}>Next ›</button></div>`;
+  h+=`<div class="win"><b>${winners.length?winners.length+' perfect · $'+winners.length*5+' to pay out':'No perfect weeks yet'}</b><div class="sub">${winners.length?winners.map(w=>esc(w.p.name)).join(', '):'35 of 35 prayers (all 5, all 7 days) earns $5.'}</div></div>`;
+  h+=rows.map(r=>r.html).join('')||'<div class="empty">No one has joined yet.</div>';
+  h+=`<p class="note">Filled green = prayed, red = missed, empty = still ahead. Missed prayers can’t be added later.</p>`;
+  if(!dbOn)h+=`<p class="note">Sync isn’t active here, so this only shows this device.</p>`;
+  return h;
+}
+
+function settingsView(){
+  const s=me.settings;
+  const opt=(o,v)=>Object.entries(o).map(([k,x])=>`<option value="${k}" ${k===v?'selected':''}>${esc(x[0])}</option>`).join('');
+  return`<div class="panel"><b>Settings</b>
+  <label>Your name</label><input id="s-name" value="${esc(me.name)}" maxlength="40">
+  <label>City</label><select id="s-city">${opt(CITIES,s.city)}</select>
+  <div class="row2" id="s-cust" style="${s.city==='custom'?'':'display:none'}"><div><label>Latitude</label><input id="s-lat" value="${esc(s.lat)}"></div><div><label>Longitude</label><input id="s-lng" value="${esc(s.lng)}"></div></div>
+  <label>Calculation method</label><select id="s-method">${opt(METHODS,s.method)}</select>
+  <label>Asr</label><select id="s-asr"><option value="0" ${s.hanafi?'':'selected'}>Standard (Shafi, Maliki, Hanbali)</option><option value="1" ${s.hanafi?'selected':''}>Hanafi</option></select>
+  <p class="note">Times follow this device’s clock and timezone.</p>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn go" onclick="saveSet()">Save</button><button class="ghost" onclick="showSet=false;render()">Cancel</button></div></div>`;
+}
+window.saveSet=()=>{
+  const g=i=>document.getElementById(i).value;
+  me.name=g('s-name').trim()||me.name;
+  me.settings={city:g('s-city'),method:g('s-method'),hanafi:g('s-asr')==='1',lat:parseFloat(g('s-lat'))||0,lng:parseFloat(g('s-lng'))||0};
+  showSet=false;save();render();
+};
+window.joinNow=()=>{
+  const n=document.getElementById('j-name').value.trim();if(!n){toast('Please enter your name');return}
+  me.name=n;me.settings={...me.settings,city:document.getElementById('j-city').value};save();render();
+};
+
+function render(){
+  const app=document.getElementById('app');
+  if(!loaded&&dbOn){app.innerHTML='<div class="empty">Loading…</div>';return}
+  const act=document.activeElement;if(act&&/^(s-|j-)/.test(act.id||'')&&!(act.id==='s-city'))return;
+  if(!me.name){
+    app.innerHTML=`<h1>Salat Tracker</h1><p class="sub">Five prayers a day. Check each one off in its time.</p><div class="panel"><label>Your name</label><input id="j-name" maxlength="40" placeholder="e.g. Amina"><label>Your city (for prayer times)</label><select id="j-city">${Object.entries(CITIES).filter(x=>x[0]!=='custom').map(([k,v])=>`<option value="${k}" ${k==='toronto'?'selected':''}>${esc(v[0])}</option>`).join('')}</select><div style="margin-top:14px"><button class="btn go" style="width:100%" onclick="joinNow()">Start</button></div></div>`;
+    return;
+  }
+  const d=new Date();
+  app.innerHTML=`<header><div><h1>Salat Tracker</h1><div class="sub">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})} · ${esc((CITIES[me.settings.city]||CITIES.toronto)[0])}</div></div><button class="ghost" onclick="showSet=!showSet;render()">⚙ Settings</button></header>
+  <div class="tabs"><button class="${view==='today'?'on':''}" onclick="view='today';render()">Today</button><button class="${view==='week'?'on':''}" onclick="view='week';render()">Week &amp; $5</button></div>`
+  +(showSet?settingsView():'')+(view==='today'?todayView():weekView());
+  const c=document.getElementById('s-city');if(c)c.onchange=()=>{document.getElementById('s-cust').style.display=c.value==='custom'?'':'none'};
+}
+setInterval(()=>{if(!showSet)render()},15000);
+init();
+</script>
+</body>
+</html>
